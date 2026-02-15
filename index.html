@@ -19,9 +19,49 @@
         <!-- Hero Section -->
         <section class="hero" style="background: linear-gradient(135deg, #000000 0%, #2a0a0a 50%, #000000 100%);">
             <div class="hero-overlay"></div>
+
+            <!-- Boss Raid UI Removed -->
+
             <div class="hero-content">
-                <h1 class="hero-title">DISCIPLINE</h1>
+                <h1 class="hero-title">DISCIPLINE TRACKER</h1>
                 <p class="hero-subtitle">FORGE YOUR PATH</p>
+
+                <div class="player-stats">
+                    <div class="rank-display" id="rankDisplay">BRONZE</div>
+                    <div class="level-badge">
+                        <span class="level-label">LVL</span>
+                        <span class="level-value" id="playerLevel">1</span>
+                    </div>
+                    <div class="xp-container">
+                        <div class="xp-bar">
+                            <div class="xp-fill" id="xpFill" style="width: 0%"></div>
+                        </div>
+                        <div class="xp-text"><span id="currentXP">0</span> / <span id="nextLevelXP">100</span> XP</div>
+                    </div>
+                </div>
+
+                <!-- Theme Selector (Moved Below) -->
+                <div class="theme-selector-container">
+                    <select id="themeSelector" class="theme-selector">
+                        <option value="crimson">Crimson Black</option>
+                        <option value="ocean">Ocean Blue</option>
+                        <option value="toxic">Toxic Green</option>
+                        <option value="royal">Royal Purple</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- BOSS ARENA -->
+        <section id="bossContainer" class="boss-arena" style="display:none;">
+            <div class="arena-header">
+                <h2 class="boss-name" id="bossName">THE VOID TITAN</h2>
+                <span class="boss-timer">WEEKEND RAID</span>
+            </div>
+
+            <div class="boss-health-bar">
+                <div class="boss-health-fill" id="bossHealthFill" style="width:100%;"></div>
+                <div class="boss-hp-text"><span id="bossHP">1000</span> / <span id="bossMaxHP">1000</span> HP</div>
             </div>
         </section>
 
@@ -109,6 +149,7 @@
                         <option value="creative">🎨 Creative</option>
                         <option value="custom">⭐ Custom</option>
                     </select>
+
                     <button class="btn" id="addHabitBtn">ADD HABIT</button>
                 </div>
             </div>

@@ -1,11 +1,83 @@
 // Habit Tracker App - Dark Anime Aesthetic with Analytics
+// Theme Presets
+const THEMES = {
+    crimson: {
+        name: 'Crimson Black',
+        voidBlack: '#000000',
+        primary: '#dc2626',
+        secondary: '#ffffff',
+        tertiary: '#991b1b',
+        textWhite: '#ffffff',
+        textDim: '#e5e5e5'
+    },
+    ocean: {
+        name: 'Ocean Blue',
+        voidBlack: '#001f3f',
+        primary: '#0077be',
+        secondary: '#7fdbff',
+        tertiary: '#003d5c',
+        textWhite: '#ffffff',
+        textDim: '#b3d9ff'
+    },
+    toxic: {
+        name: 'Toxic Green',
+        voidBlack: '#0a0a0a',
+        primary: '#39ff14',
+        secondary: '#ccff00',
+        tertiary: '#1a5c00',
+        textWhite: '#ffffff',
+        textDim: '#ccffcc'
+    },
+    royal: {
+        name: 'Royal Purple',
+        voidBlack: '#2d0052',
+        primary: '#8b00ff',
+        secondary: '#e0b0ff',
+        tertiary: '#4b0082',
+        textWhite: '#ffffff',
+        textDim: '#dda0ff'
+    }
+};
+
+const RANKS = [
+    { name: 'BRONZE', threshold: 0, color: '#cd7f32' },
+    { name: 'SILVER', threshold: 500, color: '#c0c0c0' },
+    { name: 'GOLD', threshold: 1500, color: '#ffd700' },
+    { name: 'PLATINUM', threshold: 3000, color: '#e5e4e2' },
+    { name: 'DIAMOND', threshold: 6000, color: '#b9f2ff' },
+    { name: 'EMERALD', threshold: 10000, color: '#50c878' },
+    { name: 'MASTER', threshold: 20000, color: '#ff00ff' },
+    { name: 'DEVIL', threshold: 40000, color: '#ff0000' },
+    { name: 'MONSTER', threshold: 80000, color: '#8b0000' },
+    { name: 'GRANDMASTER', threshold: 150000, color: '#ffffff' },
+    { name: 'THE DISCIPLINE', threshold: 500000, color: '#00ffff' }
+];
+
+const BOSS_ROSTER = [
+    { name: "THE VOID TITAN", hp: 1000, color: "#dc2626" },
+    { name: "ABYSSAL LEVIATHAN", hp: 2500, color: "#0077be" },
+    { name: "CELESTIAL DRAGON", hp: 5000, color: "#ffd700" },
+    { name: "CHRONOS KEEPER", hp: 10000, color: "#ffffff" },
+    { name: "CHAOS EMPEROR", hp: 25000, color: "#991b1b" }
+];
+
 class HabitTracker {
     constructor() {
         this.habits = this.loadHabits();
         this.completionHistory = this.loadCompletionHistory();
+        this.userProfile = this.loadUserProfile();
         this.currentQuoteIndex = 0;
         this.quotesDatabase = this.getQuotesDatabase();
         this.tipsDatabase = this.getTipsDatabase();
+
+        // Boss Data
+        this.boss = {
+            name: "THE VOID TITAN",
+            hp: 1000,
+            maxHp: 1000,
+            active: false
+        };
+
         this.init();
     }
 
@@ -139,12 +211,137 @@ class HabitTracker {
         };
     }
 
+
     init() {
         this.renderHabits();
         this.renderAnalytics();
         this.attachEventListeners();
         this.createRainEffect();
+        this.checkBossSpawn();
+        this.checkDecay(); // NEW: Check for inactivity
     }
+
+    checkDecay() {
+        const now = Date.now();
+        const lastLogin = this.userProfile.lastLogin || now;
+        const diff = now - lastLogin;
+        const daysMissed = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+        if (daysMissed >= 1) {
+            const decayAmount = daysMissed * 500;
+            if (this.userProfile.totalXP > 0) {
+                this.userProfile.totalXP = Math.max(0, this.userProfile.totalXP - decayAmount);
+                this.showComboEffect(`DECAY: -${decayAmount} XP`);
+                this.saveUserProfile();
+
+                // Visual Warning
+                const overlay = document.createElement('div');
+                overlay.className = 'decay-overlay';
+                overlay.innerHTML = `
+                    <div class="decay-message">
+                        <h1>WARNING: DISCIPLINE FADING</h1>
+                        <p>You missed ${daysMissed} day(s).</p>
+                        <p class="decay-loss">-${decayAmount} XP</p>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+                setTimeout(() => overlay.remove(), 4000);
+            }
+        }
+
+        // Update last login
+        this.userProfile.lastLogin = now;
+        this.saveUserProfile();
+    }
+
+    // Boss Raid Logic
+    checkBossSpawn() {
+        const day = new Date().getDay();
+        // Spawn on Friday (5), Saturday (6), Sunday (0)
+        if (day === 5 || day === 6 || day === 0) {
+            const bossIndex = this.userProfile.bossProgress || 0;
+            const bossData = BOSS_ROSTER[bossIndex % BOSS_ROSTER.length];
+
+            // Initialize boss if not active or if switching bosses
+            if (!this.boss.active || this.boss.name !== bossData.name) {
+                this.boss = {
+                    name: bossData.name,
+                    hp: bossData.hp,
+                    maxHp: bossData.hp,
+                    active: true,
+                    color: bossData.color
+                };
+            }
+
+            if (this.boss.hp <= 0) {
+                this.boss.active = false;
+                document.getElementById('bossContainer').style.display = 'none';
+                return;
+            }
+
+            this.boss.active = true;
+            document.getElementById('bossContainer').style.display = 'block';
+            this.renderBoss();
+        } else {
+            this.boss.active = false;
+            document.getElementById('bossContainer').style.display = 'none';
+        }
+    }
+
+    damageBoss(amount) {
+        if (!this.boss.active) return;
+
+        this.boss.hp = Math.max(0, this.boss.hp - amount);
+        this.renderBoss();
+
+        if (this.boss.hp === 0) {
+            this.bossDefeated();
+        } else {
+            // Boss Hit Effect
+            const container = document.getElementById('bossContainer');
+            container.style.transform = "translateX(-50%) scale(0.95)";
+            setTimeout(() => container.style.transform = "translateX(-50%) scale(1)", 100);
+        }
+    }
+
+    bossDefeated() {
+        this.boss.active = false;
+        document.getElementById('bossContainer').style.display = 'none';
+        this.showComboEffect("TITAN SLAIN! +1000 XP");
+        this.userProfile.totalXP += 1000;
+        this.levelUp();
+        this.saveUserProfile();
+
+        // Celebration visual
+        document.body.style.backgroundColor = 'var(--gold)';
+        setTimeout(() => document.body.style.backgroundColor = '', 500);
+    }
+
+    renderBoss() {
+        const fill = document.getElementById('bossHealthFill');
+        const hpText = document.getElementById('bossHP');
+        const maxHpText = document.getElementById('bossMaxHP');
+        const nameText = document.getElementById('bossName');
+
+        if (fill && hpText) {
+            const pct = (this.boss.hp / this.boss.maxHp) * 100;
+            fill.style.width = `${pct}%`;
+            fill.style.background = this.boss.color ? `linear-gradient(90deg, ${this.boss.color}, #000)` : '';
+            fill.style.boxShadow = `0 0 20px ${this.boss.color}`;
+
+            hpText.textContent = this.boss.hp;
+            if (maxHpText) maxHpText.textContent = this.boss.maxHp;
+            if (nameText) {
+                nameText.textContent = this.boss.name;
+                nameText.style.color = this.boss.color;
+                nameText.style.textShadow = `0 0 10px ${this.boss.color}`;
+            }
+        }
+    }
+
+    // ... (rest of methods)
+
+
 
     // Local Storage Management
     loadHabits() {
@@ -165,6 +362,104 @@ class HabitTracker {
         localStorage.setItem('completionHistory', JSON.stringify(this.completionHistory));
     }
 
+    loadUserProfile() {
+        const stored = localStorage.getItem('userProfile');
+        return stored ? JSON.parse(stored) : {
+            level: 1,
+            totalXP: 0,
+            achievements: [],
+            currentTheme: 'crimson'
+        };
+    }
+
+    saveUserProfile() {
+        localStorage.setItem('userProfile', JSON.stringify(this.userProfile));
+    }
+
+    // Utility Methods
+    getDefaultColor(category) {
+        const colors = {
+            fitness: '#dc2626', mental: '#8b00ff', health: '#22c55e',
+            productivity: '#f59e0b', learning: '#0077be', social: '#ec4899',
+            creative: '#a855f7', custom: '#ffffff'
+        };
+        return colors[category] || '#ffffff';
+    }
+
+    calculateXP(streak) {
+        const baseXP = 10;
+        const streakBonus = Math.floor(streak / 7) * 5;
+        return baseXP + streakBonus;
+    }
+
+    levelUp() {
+        const newLevel = Math.floor(Math.sqrt(this.userProfile.totalXP / 100));
+        if (newLevel > this.userProfile.level) {
+            this.userProfile.level = newLevel;
+            this.showLevelUpEffect(newLevel);
+            this.saveUserProfile();
+        }
+    }
+
+    applyTheme(themeName) {
+        const theme = THEMES[themeName];
+        if (!theme) return;
+        const root = document.documentElement.style;
+        root.setProperty('--void-black', theme.voidBlack);
+        root.setProperty('--electric-cyan', theme.primary);
+        root.setProperty('--crimson-red', theme.secondary);
+        root.setProperty('--neon-blue', theme.tertiary);
+        root.setProperty('--text-white', theme.textWhite);
+        root.setProperty('--text-dim', theme.textDim);
+        this.userProfile.currentTheme = themeName;
+        this.saveUserProfile();
+    }
+
+    showLevelUpEffect(level) {
+        const overlay = document.createElement('div');
+        overlay.className = 'level-up-overlay';
+        overlay.innerHTML = `<div class="level-up-content"><div class="level-up-text">LEVEL UP!</div><div class="level-up-number">${level}</div></div>`;
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.remove(), 3000);
+    }
+
+
+
+    checkAchievements(habit) {
+        const achievements = [
+            { id: 'streak_7', name: '7 DAY WARRIOR', desc: 'Maintain a 7 day streak', condition: h => h.streak >= 7 },
+            { id: 'streak_30', name: '30 DAY LEGEND', desc: 'Maintain a 30 day streak', condition: h => h.streak >= 30 },
+            { id: 'expert', name: 'EXPERT', desc: 'Complete 100 total reps', condition: h => h.totalCompletions >= 100 }
+        ];
+
+        achievements.forEach(ach => {
+            if (ach.condition(habit) && !this.userProfile.achievements.includes(ach.id)) {
+                this.userProfile.achievements.push(ach.id);
+                this.showAchievementUnlock(ach);
+                this.userProfile.totalXP += 500; // Bonus XP
+                this.saveUserProfile();
+            }
+        });
+    }
+
+    showAchievementUnlock(achievement) {
+        const div = document.createElement('div');
+        div.className = 'achievement-toast';
+        div.innerHTML = `
+            <div style="font-size:2rem">🏆</div>
+            <div>
+                <div style="font-weight:bold; color:var(--electric-cyan)">ACHIEVEMENT UNLOCKED</div>
+                <div style="font-size:0.8rem">${achievement.name}</div>
+            </div>
+        `;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 4000);
+    }
+
+
+
+
+
     // Habit CRUD Operations
     addHabit(name, category) {
         if (!name.trim()) return;
@@ -177,7 +472,8 @@ class HabitTracker {
             totalCompletions: 0,
             lastCompleted: null,
             createdAt: new Date().toISOString(),
-            completionDates: []
+            completionDates: [],
+            xp: 0
         };
 
         this.habits.push(habit);
@@ -217,6 +513,18 @@ class HabitTracker {
         habit.lastCompleted = new Date().toISOString();
         habit.completionDates.push(new Date().toISOString());
 
+        // Award XP (Gamification)
+        const xpEarned = this.calculateXP(habit.streak);
+        habit.xp += xpEarned;
+        this.userProfile.totalXP += xpEarned;
+        this.levelUp(); // Check for level-up
+
+        // Damage Boss
+        if (this.boss.active) {
+            const dmg = 50 + (habit.streak * 10);
+            this.damageBoss(dmg);
+        }
+
         const dateKey = new Date().toISOString().split('T')[0];
         if (!this.completionHistory[dateKey]) {
             this.completionHistory[dateKey] = 0;
@@ -225,9 +533,10 @@ class HabitTracker {
 
         this.saveHabits();
         this.saveCompletionHistory();
+        this.saveUserProfile(); // NEW: Save XP/level changes
         this.renderHabits();
         this.renderAnalytics();
-        this.showComboEffect(`${habit.streak} COMBO!`);
+        this.showComboEffect(`${habit.streak} COMBO! +${xpEarned}XP`);
     }
 
     // UI Rendering
@@ -261,9 +570,13 @@ class HabitTracker {
             custom: '⭐'
         };
 
+
+
         return `
       <div class="habit-card ${isCompletedToday ? 'completed' : ''}" data-id="${habit.id}">
-        <div class="habit-category">${categoryEmojis[habit.category]} ${habit.category}</div>
+        <div class="habit-header-row" style="display:flex; justify-content:space-between; align-items:center;">
+             <div class="habit-category">${categoryEmojis[habit.category]} ${habit.category}</div>
+        </div>
         
         <div class="habit-header">
           <h3 class="habit-name">${this.escapeHtml(habit.name)}</h3>
@@ -278,6 +591,10 @@ class HabitTracker {
           <div class="stat">
             <div class="stat-label">Total</div>
             <div class="stat-value">${habit.totalCompletions}</div>
+          </div>
+           <div class="stat">
+            <div class="stat-label">XP</div>
+            <div class="stat-value" style="color:var(--electric-cyan)">${habit.xp || 0}</div>
           </div>
         </div>
 
@@ -743,20 +1060,35 @@ class HabitTracker {
         const input = document.getElementById('habitInput');
         const categorySelect = document.getElementById('categorySelect');
 
-        addBtn.addEventListener('click', () => {
-            this.addHabit(input.value, categorySelect.value);
+        // Helper to add habit with all fields
+        const submitHabit = () => {
+            this.addHabit(
+                input.value,
+                categorySelect.value,
+                this.currentHabitType || 'good'
+            );
             input.value = '';
-        });
+        };
+
+        addBtn.addEventListener('click', submitHabit);
 
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                this.addHabit(input.value, categorySelect.value);
-                input.value = '';
+                submitHabit();
             }
         });
 
         document.getElementById('nextQuote').addEventListener('click', () => this.nextQuote());
         document.getElementById('prevQuote').addEventListener('click', () => this.prevQuote());
+
+        // Theme Selector
+        const themeSelector = document.getElementById('themeSelector');
+        if (themeSelector) {
+            themeSelector.value = this.userProfile.currentTheme;
+            themeSelector.addEventListener('change', (e) => {
+                this.applyTheme(e.target.value);
+            });
+        }
 
         document.querySelectorAll('.tip-category-card').forEach(card => {
             card.addEventListener('click', () => {
@@ -773,6 +1105,9 @@ class HabitTracker {
             }
         });
 
+
+
+
         window.addEventListener('resize', () => {
             if (this.habits.length > 0) {
                 this.renderAnalytics();
@@ -781,6 +1116,99 @@ class HabitTracker {
 
         this.displayQuote();
         this.startQuoteRotation();
+        this.renderUserProfile(); // Render XP/Level on load
+    }
+
+    renderUserProfile() {
+        // Update XP Bar
+        const xpFill = document.getElementById('xpFill');
+        const currentXP = document.getElementById('currentXP');
+        const nextLevelXP = document.getElementById('nextLevelXP');
+        const playerLevel = document.getElementById('playerLevel');
+
+        // Simple linear progression: Level * 100 XP per level
+        const xpForNextLevel = (this.userProfile.level + 1) * 100; // Simplified for MVP
+        const xpProgress = (this.userProfile.totalXP % 100) / 100 * 100; // Just visual percentage of 100 block
+
+        // Better logic: Total XP determines level. 
+        // Lvl 1: 0-100. Lvl 2: 101-200. etc.
+        const levelBase = this.userProfile.level * 100;
+        const levelCeiling = (this.userProfile.level + 1) * 100;
+        // let currentLevelXP = this.userProfile.totalXP - (this.userProfile.level * 100); 
+        // simplified: 
+
+        if (xpFill && currentXP) {
+            // For now, just show total XP vs next milestone
+            const nextMilestone = (Math.floor(this.userProfile.totalXP / 100) + 1) * 100;
+            const progress = (this.userProfile.totalXP % 100);
+
+            xpFill.style.width = `${progress}%`;
+            currentXP.textContent = this.userProfile.totalXP;
+            nextLevelXP.textContent = nextMilestone;
+            playerLevel.textContent = this.userProfile.level;
+        }
+
+        // Apply saved theme
+        this.applyTheme(this.userProfile.currentTheme);
+
+        // Update Rank
+        const currentRank = this.getRank();
+        const rankDisplay = document.getElementById('rankDisplay');
+        if (rankDisplay) {
+            rankDisplay.textContent = currentRank.name;
+            rankDisplay.style.color = currentRank.color;
+            rankDisplay.style.textShadow = `0 0 20px ${currentRank.color}`;
+        }
+    }
+
+    getRank() {
+        const xp = this.userProfile.totalXP;
+        // Find the highest rank threshold met
+        for (let i = RANKS.length - 1; i >= 0; i--) {
+            if (xp >= RANKS[i].threshold) {
+                return RANKS[i];
+            }
+        }
+        return RANKS[0]; // Default to Bronze
+    }
+
+
+    // Data Persistence
+    loadUserProfile() {
+        const stored = localStorage.getItem('userProfile');
+        if (stored) {
+            return JSON.parse(stored);
+        }
+        return {
+            level: 1,
+            totalXP: 0,
+            achievements: [],
+            currentTheme: 'crimson',
+            bossProgress: 0,
+            lastLogin: Date.now()
+        };
+    }
+
+    saveUserProfile() {
+        localStorage.setItem('userProfile', JSON.stringify(this.userProfile));
+    }
+
+    loadHabits() {
+        const stored = localStorage.getItem('habits');
+        return stored ? JSON.parse(stored) : [];
+    }
+
+    saveHabits() {
+        localStorage.setItem('habits', JSON.stringify(this.habits));
+    }
+
+    loadCompletionHistory() {
+        const stored = localStorage.getItem('completionHistory');
+        return stored ? JSON.parse(stored) : {};
+    }
+
+    saveCompletionHistory() {
+        localStorage.setItem('completionHistory', JSON.stringify(this.completionHistory));
     }
 }
 
