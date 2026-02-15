@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Dark anime aesthetic habit tracker - Build discipline like a fighter, track your habits with brutal intensity">
+    <title>DISCIPLINE TRACKER - The Pain of Discipline or The Pain of Regret</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Rain Effect -->
+    <div class="rain-container" id="rainContainer"></div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero" style="background: linear-gradient(135deg, #000000 0%, #2a0a0a 50%, #000000 100%);">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <h1 class="hero-title">DISCIPLINE</h1>
+                <p class="hero-subtitle">FORGE YOUR PATH</p>
+            </div>
+        </section>
+
+        <!-- Quote Section -->
+        <section class="quote-section">
+            <div class="quote-container">
+                <button class="quote-nav quote-nav-prev" id="prevQuote">‹</button>
+                <div class="quote-content">
+                    <p class="quote-text" id="quoteText">THE PAIN OF DISCIPLINE<br>OR THE PAIN OF REGRET</p>
+                    <p class="quote-author" id="quoteAuthor">- DISCIPLINE</p>
+                    <div class="quote-category" id="quoteCategory">MINDSET</div>
+                </div>
+                <button class="quote-nav quote-nav-next" id="nextQuote">›</button>
+            </div>
+        </section>
+
+        <!-- Analytics Dashboard -->
+        <section class="analytics-section" id="analyticsSection" style="display: none;">
+            <h2 class="section-title">BATTLE ANALYTICS</h2>
+
+            <div class="analytics-grid">
+                <!-- Column Chart -->
+                <div class="analytics-card">
+                    <h3 class="analytics-card-title">Weekly Habits Column Chart</h3>
+                    <canvas id="weeklyColumnChart" width="400" height="300"></canvas>
+                </div>
+
+                <!-- Daily Progress Pie Chart -->
+                <div class="analytics-card">
+                    <h3 class="analytics-card-title">Daily Progress</h3>
+                    <canvas id="dailyProgressPie" width="300" height="300"></canvas>
+                </div>
+
+                <!-- Category Pie Chart -->
+                <div class="analytics-card">
+                    <h3 class="analytics-card-title">Category Mix</h3>
+                    <canvas id="categoryPieChart" width="300" height="300"></canvas>
+                </div>
+
+                <!-- Completion Rate Graph -->
+                <div class="analytics-card">
+                    <h3 class="analytics-card-title">7-Day Completion Rate</h3>
+                    <canvas id="completionGraph" width="400" height="300"></canvas>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="analytics-card stats-overview">
+                    <h3 class="analytics-card-title">Overall Stats</h3>
+                    <div class="stat-item">
+                        <span class="stat-item-label">Total Habits:</span>
+                        <span class="stat-item-value" id="totalHabits">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-item-label">Completed Today:</span>
+                        <span class="stat-item-value" id="completedToday">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-item-label">Longest Streak:</span>
+                        <span class="stat-item-value" id="longestStreak">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-item-label">Total Completions:</span>
+                        <span class="stat-item-value" id="totalCompletions">0</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Habit Tracker Section -->
+        <section class="tracker-section">
+            <h2 class="section-title">YOUR BATTLES</h2>
+
+            <!-- Add Habit Form -->
+            <div class="add-habit-form">
+                <div class="form-group">
+                    <input type="text" id="habitInput" class="habit-input" placeholder="Enter your next challenge..."
+                        maxlength="50">
+                    <select id="categorySelect" class="category-select">
+                        <option value="fitness">💪 Fitness</option>
+                        <option value="mental">🧠 Mental</option>
+                        <option value="health">❤️ Health</option>
+                        <option value="productivity">⚡ Productivity</option>
+                        <option value="learning">📚 Learning</option>
+                        <option value="social">👥 Social</option>
+                        <option value="creative">🎨 Creative</option>
+                        <option value="custom">⭐ Custom</option>
+                    </select>
+                    <button class="btn" id="addHabitBtn">ADD HABIT</button>
+                </div>
+            </div>
+
+            <!-- Habits Grid -->
+            <div class="habits-grid" id="habitsGrid">
+                <!-- Habit cards will be dynamically inserted here -->
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-state-icon">⚔️</div>
+                <p class="empty-state-text">NO BATTLES YET. ADD YOUR FIRST HABIT.</p>
+            </div>
+        </section>
+
+        <!-- Tips & Routines Section -->
+        <section class="tips-section">
+            <h2 class="section-title">MONSTER DISCIPLINE ARSENAL</h2>
+            <div class="tips-grid">
+                <div class="tip-category-card" data-category="bodybuilding">
+                    <div class="tip-icon">💪</div>
+                    <h3>BODYBUILDING</h3>
+                    <p>Forge your physique</p>
+                </div>
+                <div class="tip-category-card" data-category="skincare">
+                    <div class="tip-icon">✨</div>
+                    <h3>SKINCARE</h3>
+                    <p>Perfect your appearance</p>
+                </div>
+                <div class="tip-category-card" data-category="looksmaxxing">
+                    <div class="tip-icon">⚡</div>
+                    <h3>LOOKSMAXXING</h3>
+                    <p>Maximize aesthetics</p>
+                </div>
+                <div class="tip-category-card" data-category="icons">
+                    <div class="tip-icon">👑</div>
+                    <h3>ICON ROUTINES</h3>
+                    <p>Barrett & Chico inspired</p>
+                </div>
+                <div class="tip-category-card" data-category="nutrition">
+                    <div class="tip-icon">🥩</div>
+                    <h3>NUTRITION</h3>
+                    <p>Fuel the machine</p>
+                </div>
+                <div class="tip-category-card" data-category="sleep">
+                    <div class="tip-icon">🌙</div>
+                    <h3>SLEEP</h3>
+                    <p>Recovery protocol</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Tips Modal -->
+    <div class="tips-modal" id="tipsModal">
+        <div class="tips-modal-content">
+            <button class="tips-modal-close" id="closeModal">×</button>
+            <h2 class="tips-modal-title" id="modalTitle">TIPS</h2>
+            <div class="tips-modal-body" id="modalBody">
+                <!-- Content will be dynamically inserted -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Combo Effect Container -->
+    <div id="comboEffect"></div>
+
+    <!-- Footer with Contact and Donation -->
+    <footer class="footer">
+        <div class="footer-content">
+            <!-- Contact Bar -->
+            <div class="footer-section contact-bar">
+                <div class="footer-icon">📱</div>
+                <div class="footer-text">
+                    <h3>CONTACT</h3>
+                    <a href="https://t.me/H4CKRD" target="_blank" class="telegram-link">
+                        <span class="telegram-icon">✈️</span> Telegram: @H4CKRD
+                    </a>
+                </div>
+            </div>
+
+            <!-- Buy Me a Coffee Bar -->
+            <div class="footer-section coffee-bar">
+                <div class="footer-icon">☕</div>
+                <div class="footer-text">
+                    <h3>SUPPORT THE GRIND</h3>
+                    <div class="wallet-info">
+                        <span class="wallet-label">OxaPay Wallet:</span>
+                        <code class="wallet-address" id="walletAddress">OXALEI4fvH1gWXFn4cmP9AhGQD</code>
+                        <button class="copy-btn" onclick="copyWallet()" title="Copy wallet address">📋</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
